@@ -34,7 +34,6 @@
     function loadComponents() {
         var isHttp = window.location.protocol === 'http:' || window.location.protocol === 'https:';
         
-        // Логотип
         var logoContainer = document.querySelector('.logo-container');
         if (logoContainer) {
             if (isHttp) {
@@ -47,7 +46,6 @@
             }
         }
         
-        // Сайдбар
         var navContainer = document.querySelector('.nav-container');
         if (navContainer) {
             if (isHttp) {
@@ -99,6 +97,11 @@
                     <a href="items.html" class="nav-link"><i class="fas fa-box"></i> Предметы и инвентарь</a>
                     <a href="particles.html" class="nav-link"><i class="fas fa-sparkles"></i> Частицы</a>
                     
+                    <div class="nav-category"><i class="fas fa-cube"></i> Кастомные ресурсы</div>
+                    <a href="custom-resources.html" class="nav-link"><i class="fas fa-cube"></i> Блоки, предметы, крафты</a>
+                    <a href="visual-blocks.html" class="nav-link"><i class="fas fa-puzzle-piece"></i> Визуальные блоки</a>
+                    <a href="java-api.html" class="nav-link"><i class="fab fa-java"></i> Java API</a>
+                    
                     <div class="nav-category"><i class="fas fa-folder-open"></i> Примеры</div>
                     <a href="examples.html" class="nav-link"><i class="fas fa-file-code"></i> Полные примеры</a>
                 </nav>
@@ -114,6 +117,104 @@
                     </a>
                 </div>
             `;
+        }
+    }
+    
+    // Регистрация языка spr для Highlight.js
+    function registerSprLanguage() {
+        if (typeof hljs !== 'undefined' && !hljs.getLanguage('spr')) {
+            hljs.registerLanguage('spr', function(hljs) {
+                return {
+                    name: 'Spraute Script',
+                    keywords: {
+                        keyword: 'val global world await create if else while for fun return on every stop async true false include import startScript stopScript cancelEvent',
+                        built_in: 'chat say getNearestPlayer getPlayer giveItem setBlock random playSound stopSound uiOpen uiClose uiUpdate uiAnimate overlayOpen overlayClose stopTask taskDone intStr wholeStr strLen strWidth strNewlineCount replace getHeldItem getSlot hasItem countItem execute spawnOrb removeOrbs addMobDrop addBlockDrop startScript stopScript save_snapshot load_snapshot setColor getVar java_class java_new sendPacket particleSpawn particleLine particleCircle particleSpiral particleStartBone particleStopBone openBlockUi getBlockSlot setBlockDisplay setBlockDisplayModel setBlockDisplayBlock removeBlockDisplay'
+                    },
+                    contains: [
+                        // Комментарии для визуальных блоков (#\)
+                        {
+                            className: 'comment',
+                            begin: /#\\/,
+                            end: /$/,
+                            contains: [
+                                {
+                                    className: 'keyword',
+                                    begin: /\b(row|template|if|else|block|category|color|shape|input)\b/,
+                                    relevance: 10
+                                },
+                                {
+                                    className: 'variable',
+                                    begin: /\{([a-zA-Z_][a-zA-Z0-9_]*)\}/,
+                                    relevance: 10
+                                },
+                                {
+                                    className: 'string',
+                                    begin: /"(\\"|[^"])*"/
+                                },
+                                {
+                                    className: 'params',
+                                    begin: /\([^)]*\)/
+                                }
+                            ]
+                        },
+                        // Обычные комментарии
+                        hljs.COMMENT('#', '$'),
+                        // Строки
+                        hljs.QUOTE_STRING_MODE,
+                        // Числа
+                        hljs.C_NUMBER_MODE,
+                        // Функции
+                        {
+                            className: 'function',
+                            begin: /\b([a-zA-Z_][a-zA-Z0-9_]*)\s*\(/,
+                            relevance: 0
+                        },
+                        // Методы и свойства через точку
+                        {
+                            className: 'property',
+                            begin: /\.([a-zA-Z_][a-zA-Z0-9_]*)/,
+                            relevance: 0
+                        },
+                        // Индексы массивов
+                        {
+                            className: 'variable',
+                            begin: /\[[^\]]*\]/,
+                            relevance: 0
+                        },
+                        // Ключевые слова в обычном коде
+                        {
+                            className: 'keyword',
+                            begin: /\b(val|global|world|await|create|if|else|while|for|fun|return|on|every|stop|async|true|false|include|import|startScript|stopScript|cancelEvent)\b/,
+                            relevance: 10
+                        }
+                    ]
+                };
+            });
+        }
+    }
+    
+    // Функция для авто-добавления классов подсветки
+    function setupCodeHighlight() {
+        var preBlocks = document.querySelectorAll('pre');
+        
+        for (var i = 0; i < preBlocks.length; i++) {
+            var pre = preBlocks[i];
+            var code = pre.querySelector('code');
+            
+            if (!code) {
+                code = document.createElement('code');
+                code.innerHTML = pre.innerHTML;
+                pre.innerHTML = '';
+                pre.appendChild(code);
+            }
+            
+            if (!code.className || !code.className.includes('language-')) {
+                code.className = 'language-spr';
+            }
+        }
+        
+        if (typeof hljs !== 'undefined') {
+            hljs.highlightAll();
         }
     }
     
@@ -176,9 +277,25 @@
         }
     }
     
+    // Функция для исправления ссылок (добавляет .html если нет)
+    function fixLinks() {
+        var navLinks = document.querySelectorAll('.nav-link');
+        for (var i = 0; i < navLinks.length; i++) {
+            var link = navLinks[i];
+            var href = link.getAttribute('href');
+            
+            if (href && !href.includes('.html') && !href.startsWith('http') && !href.startsWith('#')) {
+                link.setAttribute('href', href + '.html');
+            }
+        }
+    }
+    
     // Инициализация
     function init() {
+        fixLinks();
         loadComponents();
+        registerSprLanguage();
+        setupCodeHighlight();
         setupCodeCopy();
         setupMobileMenu();
         highlightActivePage();
